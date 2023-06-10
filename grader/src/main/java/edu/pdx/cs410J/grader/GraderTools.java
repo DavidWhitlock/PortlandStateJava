@@ -3,6 +3,7 @@ package edu.pdx.cs410J.grader;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.google.common.annotations.VisibleForTesting;
+import edu.pdx.cs410J.grader.canvas.GradesFromCanvasExporter;
 import edu.pdx.cs410J.grader.canvas.GradesFromCanvasImporter;
 import edu.pdx.cs410J.grader.gradebook.ui.GradeBookGUI;
 import edu.pdx.cs410J.grader.poa.ui.PlanOfAttackGrader;
@@ -55,6 +56,9 @@ public class GraderTools {
 
       case "importFromCanvas" :
         return GradesFromCanvasImporter.class;
+
+      case "exportToCanvasCsv" :
+        return GradesFromCanvasExporter.class;
 
       case "importFromProjectReports" :
         return ProjectGradesImporter.class;

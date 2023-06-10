@@ -87,6 +87,33 @@ public class CanvasGradesCSVGeneratorTest {
     assertThat(canvasAssignment.getId(), equalTo(canvasId));
   }
 
+  @Test
+  void canvasCSVHasAssignmentGrade() throws IOException {
+    GradeBook book = new GradeBook("Test");
+    Student student = new Student("id")
+      .setFirstName("First Name")
+      .setLastName("Last Name")
+      .setCanvasId("Canvas Id");
+    book.addStudent(student);
+
+    String assignmentName = "Assignment Name";
+    Assignment assignment = new Assignment(assignmentName, 4.0).setCanvasId(1234);
+    book.addAssignment(assignment);
+    double score = 3.5;
+    student.setGrade(assignment, score);
+
+    CanvasGradesCSVParser parser = convertToCSVAndBack(book);
+    List<GradesFromCanvas.CanvasStudent> students = parser.getGrades().getStudents();
+    assertThat(students, hasSize(1));
+
+    List<GradesFromCanvas.CanvasAssignment> assignments = parser.getAssignments();
+    assertThat(assignments, hasSize(1));
+
+    GradesFromCanvas.CanvasAssignment canvasAssignment = assignments.get(0);
+    GradesFromCanvas.CanvasStudent canvasStudent = students.get(0);
+    assertThat(canvasStudent.getScore(canvasAssignment), equalTo(score));
+  }
+
   private CanvasGradesCSVParser convertToCSVAndBack(GradeBook book) throws IOException {
     StringWriter sw = new StringWriter();
     CanvasGradesCSVGenerator generator = new CanvasGradesCSVGenerator(sw);

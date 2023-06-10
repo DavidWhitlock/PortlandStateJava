@@ -2,9 +2,11 @@ package edu.pdx.cs410J.grader.canvas;
 
 import com.opencsv.CSVWriter;
 import edu.pdx.cs410J.grader.gradebook.Assignment;
+import edu.pdx.cs410J.grader.gradebook.Grade;
 import edu.pdx.cs410J.grader.gradebook.GradeBook;
 import edu.pdx.cs410J.grader.gradebook.Student;
 
+import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,11 +19,15 @@ public class CanvasGradesCSVGenerator implements CanvasGradesCSVColumnNames {
     this.writer = writer;
   }
 
-  public void generate(GradeBook book) {
-    CSVWriter csv = new CSVWriter(writer);
-    writeHeaderRow(book, csv);
-    writePossiblePointsRow(book, csv);
-    writeStudentRows(book, csv);
+  public void generate(GradeBook book) throws IOException {
+    try (
+      CSVWriter csv = new CSVWriter(writer)
+    ) {
+      writeHeaderRow(book, csv);
+      writePossiblePointsRow(book, csv);
+      writeStudentRows(book, csv);
+      csv.flush();
+    }
   }
 
   private void writePossiblePointsRow(GradeBook book, CSVWriter csv) {
@@ -49,11 +55,24 @@ public class CanvasGradesCSVGenerator implements CanvasGradesCSVColumnNames {
   }
 
   private String[] getStudentLine(GradeBook book, Student student) {
-    return new String[] {
-      getStudentName(student),
-      student.getCanvasId(),
-      book.getSectionName(student.getEnrolledSection())
-    };
+    List<String> line = new ArrayList<>();
+    line.add(getStudentName(student));
+    line.add(student.getCanvasId());
+    line.add(book.getSectionName(student.getEnrolledSection()));
+
+    addCellsForEachAssignment(book, line, assignment -> getGrade(student, assignment));
+
+    return line.toArray(new String[0]);
+  }
+
+  private String getGrade(Student student, Assignment assignment) {
+    Grade grade = student.getGrade(assignment);
+    if (grade == null) {
+      return null;
+
+    } else {
+      return String.valueOf(grade.getScore());
+    }
   }
 
   private String getStudentName(Student student) {
@@ -72,9 +91,7 @@ public class CanvasGradesCSVGenerator implements CanvasGradesCSVColumnNames {
   }
 
   private void addCellsForEachAssignment(GradeBook book, List<String> line, Function<Assignment, String> function) {
-    book.getAssignmentNames().stream().map(book::getAssignment).forEach(assignment -> {
-      line.add(function.apply(assignment));
-    });
+    book.getAssignmentNames().stream().map(book::getAssignment).forEach(assignment -> line.add(function.apply(assignment)));
   }
 
   private String getAssignmentHeaderCell(Assignment assignment) {
